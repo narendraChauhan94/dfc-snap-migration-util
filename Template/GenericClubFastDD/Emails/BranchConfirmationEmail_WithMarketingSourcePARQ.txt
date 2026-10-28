@@ -1,0 +1,93 @@
+Subject: New Member %TRANSACTIONREFERENCENUMBER% For %CLUBNAME%
+
+Producer: %CLUBNAME%
+Product: %PRODUCTDESCRIPTION%
+Branch: %BRANCHDESCRIPTION%
+
+Commitment: %AGREEINGTOTEXT%
+
+Start date: %MEMBERSHIPSTARTDATE%
+
+Member 1: %TITLE% %FORENAME% %SURNAME%
+Date Of Birth: %DOB%
+
+Member 2: %JOINTMEMBERTITLE% %JOINTMEMBERFORENAME% %JOINTMEMBERSURNAME%
+Date Of Birth: %JOINTMEMBERDOB%
+
+Account name: %ACCOUNTNAME%
+Sort Code: %SORTCODE%
+Account No.: %ACCOUNTNUMBER%
+Reference: %TRANSACTIONREFERENCENUMBER%
+
+Direct Debit Start Date: %CALCULATEDFIRSTPAYMENTDATE%
+Monthly Membership Amount: GBP%MONTHLYMEMBERSHIPFEEPENCE%
+
+Email Address: %EMAIL%
+
+Address: %ADDRESS% 
+Postcode: %POSTCODE%
+
+Mobile Phone: %MOBILEPHONE%
+Home Phone: %HOMEPHONE%
+
+Marketing Preference: %MarketingCommsPreferences%
+Third Party Marketing Preference: %ThirdPartyCommsPreferences%
+Promotional Code: %PROMOCODE%
+
+Marketing source:  %MARKETINGSOURCE%
+
+
+%UserID%
+
+Answers to PARQ:
+
+Has your Doctor ever said that you have a heart condition and you should only do physical activity recommended by a doctor?
+Answer: %parq_DrExercise%
+
+Do you feel pain in your chest when you do physical activity?
+Answer: %parq_ChestPain%
+
+In the past month have you experienced any unexplained chest pain?
+Answer: %parq_UnExplainChestPain%
+
+Do you lose your balance due to dizziness or do you ever lose consciousness?
+Answer: %parq_Consciousness%
+
+Do you have a bone or joint problem that could be made worse by a change in your physical activity?
+Answer: %parq_Joint%
+
+Is your doctor currently prescribing drugs for your blood pressure or heart condition?
+Answer: %parq_Medication%
+
+Do you know of any other reason why you should not do physical activity?
+Answer: %parq_OtherReason%
+
+Have you ever been informed that your blood cholesterol is high?
+Answer: %parq_Cholesterol%
+
+Do you have a family history of heart disease? (immediate family member less than 55 years old)
+Answer: %parq_FamilyHistory%
+
+Do you currently have any form of muscle, joint or back injury?
+Answer: %parq_Muscle%
+
+Do you suffer or have you ever suffered from diabetes?
+Answer: %parq_Diabetes%
+
+Do you suffer or have you ever suffered from asthma?
+Answer: %parq_Asthma%
+
+Do you suffer or have you ever suffered from bronchitis?
+Answer: %parq_Bronchitis%
+
+Do you suffer or have you ever suffered from epilepsy?
+Answer: %parq_Epilepsy%
+
+Have you any condition that may be made worse by physical exercise?
+Answer: %parq_Conditions%
+
+Are you pregnant?
+Answer: %parq_Pregnant%
+
+If you have answered Yes to any of the above,  please provide details:
+Answer: %parq_Details%

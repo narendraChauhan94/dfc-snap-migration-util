@@ -1,0 +1,101 @@
+DFC -> SNAP V2 CUSTOMER MIGRATION TOOL - How to use
+====================================================
+
+One customer data folder -> one SNAP V2 portal, cloned from the common template
+(Template\GenericClubFastDD) using the same rules as the hand-built Mid Ulster client.
+No AI is involved: the tool is one Windows exe and gives the same result every time.
+
+SETTING UP (once per PC)
+------------------------
+Copy these from the DFCMigration folder to the same layout on your PC (any location):
+  dist\dfcmigrate.exe          the tool (self-contained - no .NET install needed)
+  Template\                    the common template the portal is built from (required)
+  Run-DFCMigration.bat         double-click to start
+  HOW-TO-USE.txt, MIGRATION_RULES.md, DATA_FORMAT.md, EXTERNAL_SERVICES.md
+Do NOT copy: customer data folders, Logs\, Backups\, dfcmigrate.settings.json (your own answers
+are remembered there - each PC makes its own).
+
+To test portals you need a SNAP V2 site running locally, e.g. IIS site "SNAP2" on http://localhost:4200
+serving ...\SnapDDA - Website. Generate into that site's Clients folder so the pages can be tested.
+
+CUSTOMER DATA IS SENSITIVE
+--------------------------
+Customer data folders hold live merchant IDs and staff emails. Keep them on your PC or the agreed
+secure share only - never email them, never attach them to tickets or chats, and delete local
+copies when the migration is finished. The tool masks merchant IDs and never logs emails.
+
+BEFORE YOU START
+----------------
+Put the customer's DFC exports in one folder (any folder name, any file names):
+  - Club export, Branches export, Plan export(s), Category export, Design export (JSON)
+  - the Merchant HNK sheet (.xlsx)  ->  IMPORTANT: format the "Merchant HNK" column as TEXT
+    and type the exact 16-digit IDs. Excel numbers lose the 16th digit; the tool refuses them.
+    Changing the column to Text AFTER typing does not bring the digit back - re-type or paste
+    the IDs from the merchant source (the tool stops if every ID ends in 0).
+  - Save and close the sheet in Excel before running.
+  - The Design export drives the stylesheet: colours, LogoAlign (Left/Center/Right) and
+    BoxStyle (Rounded/Square). Any other value stops the run.
+  - the customer logo (one .jpg/.png) - optional
+Start the local SNAP site if you want the pages tested (recommended).
+
+START
+-----
+Double-click Run-DFCMigration.bat, or drag the customer's data folder onto it.
+At any question: ENTER accepts the value in [brackets]; Q goes back / stops (nothing is written).
+
+  STEP 1  Customer data folder
+          The tool lists every file and the role it recognised (Club, Plans, Merchant sheet ...).
+          ALL-CUSTOMER FOLDER (see DATA_FORMAT.md): it lists every customer with the data each one has
+          ("complete" or "missing plans, merchant IDs ..."). Pick one by list number, DFC ClubID, or part
+          of the name (* shows the full list again). A folder with one customer is picked automatically.
+          With _manifest.json the tool proves no export was cut off; without it, a file of exactly
+          10,000 / 20,000 ... records is flagged as possibly cut off.
+          It shows the customer, pages, branches and product counts, plus:
+            - ERRORS        (red)    must be fixed; nothing is generated. Press R to re-check after fixing,
+                                     F to choose another folder, Q to quit.
+            - ACTION ITEMS  (yellow) values the DFC data does not have (ClubID, terms document ...);
+                                     written into the config as NEEDS VALUE notes.
+  STEP 2  SNAP Clients folder        e.g. C:\SourceCode\SnapV2\SNAP2\SnapDDA - Website\Clients
+          Reference client (optional) a known-good client folder to compare with (blank = skip)
+          Running SNAP site (optional) e.g. http://localhost:4200 to test the live pages (blank = skip)
+                                     The tool checks the site answers BEFORE building. If it doesn't:
+                                     start the site and press R to retry, S to skip the page checks, Q to quit.
+  STEP 3  Generate
+          If the portal folder already exists you are asked before replacing it (old copy -> Backups\).
+          Type  yes  to create the files. The tool then re-reads everything it wrote and checks it,
+          and tests the live pages if a site was given.
+
+RESULT
+------
+  COMPLETE                        everything generated and verified
+  GENERATED - ACTION ITEMS OPEN   generated and verified, but some values still need confirming (see report)
+  FAILED                          a check failed - see the report; do not deploy
+The report (Logs\<Folder>-<time>-report.md) lists the files used, action items, warnings, every check,
+and differences from the reference client if one was given.
+
+AFTER GENERATING (manual)
+-------------------------
+  - Fill the NEEDS VALUE items (ClubID = Harlands 5-digit club number, terms document, company address)
+    and confirm the thank-you wording with the client.
+  - Add the customer logo to the data folder and re-run, if the Xplor Pay logo was used.
+  - Configure any 3rd-party integration listed in the warnings (e.g. XN) in SNAP.
+
+TROUBLESHOOTING
+---------------
+  "Nothing is answering at http://..."   the SNAP site isn't running on that address. Start it in IIS
+                                         (or check the port), then press R. S skips the page checks.
+  Page checks FAIL after writing         same cause - start the site and run the tool again (replace = yes).
+  Merchant ID refused / "all end in 0"   the Merchant HNK column was a number in Excel - see BEFORE YOU START.
+  "Portal folder already exists"         answer yes to replace; the old copy goes to Backups\<Folder>.bak-<time>.
+  "dist\dfcmigrate.exe not found"        copy the dist folder next to Run-DFCMigration.bat.
+  Can't replace dist\dfcmigrate.exe      it is in use (e.g. by the Claude plugin). Close those sessions,
+                                         or rename the old exe first - Windows allows renaming a running exe.
+
+COMMAND LINE (scripts)
+----------------------
+  dist\dfcmigrate.exe --data <folder> --list-customers
+  dist\dfcmigrate.exe --data <folder> --output <Clients folder> --customer <DFC ClubID> --dry-run
+  dist\dfcmigrate.exe --data <folder> --output <Clients folder> [--replace] [--yes] [--reference <client folder>] [--base-url <url>]
+  --dry-run checks and lists the files without writing anything. Exit code 0 = OK, 1 = failed, 2 = bad arguments.
+
+Rules and their sources: MIGRATION_RULES.md

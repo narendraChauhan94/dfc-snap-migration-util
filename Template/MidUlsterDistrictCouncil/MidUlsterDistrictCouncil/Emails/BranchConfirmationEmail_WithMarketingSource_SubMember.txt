@@ -1,0 +1,64 @@
+Subject: New Member %TRANSACTIONREFERENCENUMBER% For %CLUBNAME%
+
+Producer: %CLUBNAME%
+Product: %PRODUCTDESCRIPTION%
+Branch: %BRANCHDESCRIPTION%
+
+
+Commitment: %AGREEINGTOTEXT%
+
+Start date: %MEMBERSHIPSTARTDATE%
+
+Main Contact: %TITLE% %FORENAME% %SURNAME%
+Date Of Birth: %DOB%
+
+
+Student 1: %M1_Title% %M1_Forename% %M1_Surname%
+Gender: %M1_Gender%
+Date Of Birth: %M1_DOB%
+
+Student 2: %M2_Title% %M2_Forename% %M2_Surname%
+Gender: %M2_Gender%
+Date Of Birth: %M2_DOB%
+
+Student 3: %M3_Title% %M3_Forename% %M3_Surname%
+Gender: %M3_Gender%
+Date Of Birth: %M3_DOB%
+
+Student 4: %M4_Title% %M4_Forename% %M4_Surname%
+Gender: %M4_Gender%
+Date Of Birth: %M4_DOB%
+
+Student 5: %M5_Title% %M5_Forename% %M5_Surname%
+Gender: %M5_Gender%
+Date Of Birth: %M5_DOB%
+
+Account name: %ACCOUNTNAME%
+Sort Code: %SORTCODE%
+Account No.: %ACCOUNTNUMBER%
+Reference: %TRANSACTIONREFERENCENUMBER%
+
+Direct Debit Start Date: %CALCULATEDFIRSTPAYMENTDATE%
+Monthly Membership Amount: GBP%MONTHLYMEMBERSHIPFEEPENCE%
+
+Email Address: %EMAIL%
+
+Address: %ADDRESS% 
+Postcode: %POSTCODE%
+
+Mobile Phone: %MOBILEPHONE%
+Home Phone: %HOMEPHONE%
+
+
+Promotional Code: %PROMOCODE%
+
+Marketing source:  %MARKETINGSOURCE%
+
+Marketing Preference:
+ %MarketingCommsPreferences%
+ 
+Third Party Marketing Preference:
+ %ThirdPartyCommsPreferences%
+
+%UserID%
+

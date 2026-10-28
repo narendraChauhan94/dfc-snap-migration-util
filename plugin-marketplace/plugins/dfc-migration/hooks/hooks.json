@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read|Grep|Glob|Bash|PowerShell|Edit|Write|NotebookEdit|mcp__plugin_dfc-migration_dfc__create_portal",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${user_config.tool_folder}/dist/dfcmigrate.exe",
+            "args": ["guard"],
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}

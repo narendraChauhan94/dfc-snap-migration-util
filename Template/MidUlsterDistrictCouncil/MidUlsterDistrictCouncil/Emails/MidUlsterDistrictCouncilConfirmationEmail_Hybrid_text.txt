@@ -1,0 +1,75 @@
+Dear %TITLE% %SURNAME%
+
+%THANKYOUMESSAGE%
+
+%AGREEINGTOTEXT%
+
+You have chosen to pay by monthly Direct Debit and we can confirm 
+that the Direct Debit details provided by you are correct.
+
+IMPORTANT  - Confirmation of the set-up of your Direct Debit
+instruction, including future payment schedule
+   Account name:       %ACCOUNTNAME%
+   Sort Code:          %SORTCODE%
+   Account No.:        %ACCOUNTNUMBER%
+   Our Reference:      %TRANSACTIONREFERENCENUMBER%
+   Service User Number: %ORIGINATORNUMBER%
+   Service User Name:    %ORIGINATORNAME%
+
+Your first payment for an amount of GBP%CALCULATEDFIRSTPAYMENTAMOUNTPENCE% has been taken from
+your card ending in %CC_CardNumber%.
+
+Subsequent monthly payments of GBP%MONTHLYMEMBERSHIPFEEPENCE% will 
+commence on %CALCULATEDSECONDPAYMENTDATE% and continue on or just after 
+the same day of each month thereafter.
+
+Please note that your membership payments for %CLUBNAME% will appear on 
+your bank statements as %ORIGINATORNAME%  with the reference 
+%TRANSACTIONREFERENCENUMBER%.
+
+Your Direct Debit payments are protected with a moneyback guarantee and 
+you will receive 3 working days advance notice of any changes. You have
+the right to cancel your Direct Debit Instruction at any time simply by
+writing to your Bank or Building Society, with a copy to us.
+
+Please note that if you completed this membership agreement whilst not in the club, 
+you have a period of 14 days from today in which to cancel this membership. This right 
+to cancel will cease once you visit the club, or the period of 14 days has elapsed, whichever 
+is the earlier.
+
+HELPLINE NO. 01444 449166
+ 
+
+If any of the above details are incorrect or should you at some time in
+the future experience problems making your payments when due, please 
+contact the HELPLINE.  Please note that calls may be recorded.  
+Alternatively, you can write to us at the address below, quoting reference 
+no. %TransactionReferenceNumber%.
+
+PLEASE KEEP THESE DETAILS SAFE.  You might like to print this email or 
+save it to your computer's hard drive.
+
+Please note that your payments will be protected by the Direct Debit 
+Guarantee (see below).
+
+The Direct Debit Guarantee:
+* This Guarantee is offered by all Banks and Building Societies that accept instructions to pay Direct Debits.
+
+* If there are any changes to the amount, date or frequency of your Direct Debit %OriginatorName% will
+  notify you 3 working days in advance of your account being debited or as otherwise agreed. If you
+  request %OriginatorName% to collect a payment, confirmation of the amount and date will be given
+  to you at the time of the request.
+  
+* If an error is made in the payment of your Direct Debit, by %OriginatorName% or by
+  your Bank or Building Society, you are entitled to a full and immediate refund of the amount paid from
+  your Bank or Building Society.
+   * If you receive a refund you are not entitled to, you must pay it back when
+     %OriginatorName% asks you to.
+
+* You can cancel a Direct Debit at any time by simply contacting your Bank or Building
+  Society. Written confirmation may be required. Please also notify us.
+
+
+"Snap", "SnapDD", "SnapDDA" and "Harlands" are all trading styles of Harlands Services Ltd. 
+Registered Office: 1st Floor, Central Square South, Orchard Street, Newcastle upon Tyne, NE1 3AZ Registered in England No. 2982925.    
+VAT Registration No. 799 7113 70.

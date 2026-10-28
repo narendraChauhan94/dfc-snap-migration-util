@@ -1,0 +1,644 @@
+/*
+	#MainContainer
+		#TopBanner
+		#FormContainer
+			<form>
+				<h1>heading</h1>
+				#MainForm
+					<asp:views>
+				#SnapInfo
+		#Footer
+
+	Palette tokens, filled by dfcmigrate from the customer's Design.json:
+		ButtonColour, GreyButtonColour, BackgroundColour, TextColour, HeaderTextColour, InternalBGColour,
+		ErrorColour, InfoIconColour, ErrorIconColour, LogoAlign, BoxStyle (derived: button tint, error tint, grey hover)
+*/
+
+h1, h2, h3, h4, p, legend, label, fieldset, li, td, form, a, body {
+  margin: 0;
+  padding: 0;
+  border: none;
+  font: normal 1em/1.5 'Roboto', sans-serif;
+  color: {{TextColour}};
+}
+
+/* The reset above zeroes p/td/label margins. Everything that reads as running
+   text needs its vertical rhythm put back, or the address, phone and terms
+   blocks collapse into one undifferentiated lump. */
+#MainForm p,
+.SnapInfoBody p,
+#SnapInfo p,
+#CurrentView p,
+fieldset p {
+  margin: 0.6em 0;
+}
+
+
+#TopBanner {
+  background: {{BackgroundColour}};
+  max-width: 100%;
+  border-bottom: solid 1px #ddd;
+}
+#TopBanner div {
+	max-width:960px;
+	margin-right:auto;
+	margin-left:auto;
+	display:block;
+	text-align:{{LogoAlign}}; /* Design.json LogoAlign */
+}
+
+#TopBanner img {
+	position:relative;
+	height:100px;
+	padding:0.75em 0;
+	}
+
+/* Both reference clubs centre and cap the outer container; the reference club had no
+   rule for it at all, so the page ran the full width of the viewport. */
+#MainContainer {
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+body {
+  background-color: {{BackgroundColour}};
+  background-image: none;
+  border: none;
+}
+
+#MainForm {
+  margin: 1.5em 0em 1.5em 0em;
+  background-color: #ffffff;
+  border: solid 1px #ddd;
+}
+
+#MainForm a {
+	color:{{ButtonColour}};
+	font-weight:bold; /* Fix: was font:strong — invalid font shorthand value, silently ignored by all browsers */
+}
+#MainForm p a {
+	color:{{ButtonColour}};
+	font-weight:bold; /* Fix: was font:strong — invalid font shorthand value, silently ignored by all browsers */
+
+}
+
+a:link#FindAddress  {
+	color:#fff;
+}
+a:hover#FindAddress  {
+	color:#000;
+	background-color:#c8d4db;
+	border:1px solid #e7e7e7;
+}
+#CurrentView {
+	padding:1.25em;
+}
+.FSWrap {
+	background-color:#fff;
+	margin-top:0;
+
+}
+fieldset div{
+	background-color:{{InternalBGColour}}; /* Design.json InternalBGColour */
+	border-radius:{{BoxRadius}};
+	padding:0.75em;
+	border:solid 1px #ddd;
+}
+
+h2.Head, h2.Current, h2.Foot {
+  font-size: 1.3rem;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700; /* Bold weight */
+}
+
+h2.Current {
+  background: {{ButtonColour}};
+  color: {{HeaderTextColour}};
+  border: 1px solid {{ButtonColour}}; /* Fix: was border:1px — missing style keyword, border was silently dropped */
+}
+
+h2.Current b{
+	margin-right:0.4em;
+	font-size:1.3rem;
+}
+
+h2.Foot {
+	font-weight:normal;
+}
+
+h2.Foot b {
+	margin-right:0.4em;
+	font-size:1.3rem;
+}
+h2.Head {
+	background: #fff url("Images/grey_tick_2.png") no-repeat scroll right 1em; /* Fix: path pointed at ../GenericClub/, which does not exist */
+	color:#999;
+	border:1px solid #eee;
+	font-weight:normal;
+}
+h2.Head b {
+	background:#4d4d4f;
+	color:#d1d3d4;
+	margin-right:0.4em;
+	font-size:1.3rem;
+}
+p.Buttons input {
+	background:{{ButtonColour}};
+	color:{{HeaderTextColour}};
+	border-radius:{{BoxRadius}};
+}
+
+.btnAuxillary, #FindAddress, p.Buttons input, input[type='button'], input[type='submit'] {
+  border-radius: {{BoxRadius}};
+  background-color: {{ButtonColour}};
+  color: {{HeaderTextColour}};
+  border: 0;
+  padding: 0.5em 1.5em;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* "Previous step" must not read as the primary action. It was previously in the
+   selector group above, so it rendered identically to "Next step". */
+p.Buttons input.btnSecondary,
+input[type="submit"].btnSecondary {
+  background-color: {{GreyButtonColour}};
+  color: {{HeaderTextColour}};
+}
+p.Buttons input.btnSecondary:hover,
+input[type="submit"].btnSecondary:hover {
+  background-color: {{GreyButtonHover}};
+}
+
+#groupContainer .Product label  {
+	color:#000;
+	border-radius:{{BoxRadius}};
+	margin-right:0px;
+}
+
+#groupContainer .PromoProduct label {
+	color:#000;
+	border-radius:{{BoxRadius}};
+	margin-right:0px;
+}
+
+div.noBG fieldset div {
+	background-color:#fff;
+	padding-left:0;
+}
+
+#groupContainer {
+	background-color:#fff;
+	border:0;
+	padding-left:0;
+}
+
+
+/* The grouping script builds each product row as an inline <span>, so without
+   display:block the vertical margins below are inert and the products run
+   together on one line. Both reference clubs set this explicitly. */
+#groupContainer .Product,
+#groupContainer .PromoProduct,
+span.Product,
+span.PromoProduct {
+	display:block;
+	width:100%;
+	box-sizing:border-box;
+}
+
+#groupContainer .Product {
+	background:#fff;
+	color:#000;
+	border-radius:{{BoxRadius}};
+	border:solid 1px #bababa;
+	margin:2em 0em 2em 0em;
+}
+
+#groupContainer .PromoProduct {
+	background:#fff;
+
+	border-radius:{{BoxRadius}};
+	border:solid 1px #bababa;
+	margin:2em 0em 2em 0em;
+}
+#groupContainer > span > span.Product:first-child, /* Fix: was '#groupContainer > div > span:first-child' — the group wrappers are direct span children, there is no intervening div, so the rule never matched */
+#groupContainer > span > span.PromoProduct:first-child {
+	border-top:solid 1px #bababa;
+	margin-top:0.5em; /* the full 2em leaves a dead gap under the category tabs */
+}
+#groupContainer .Product:hover { /* Fix: was #groupContainer.Product:hover — missing descendant space, selector never matched anything */
+
+	background:#fff;
+	color:#000;
+}
+
+
+
+.SelectedProduct {
+  background: {{ButtonColour}} !important; /* override hover */
+}
+
+.SelectedProduct * {
+			color: {{HeaderTextColour}} !important;
+
+			}
+
+.SelectedProduct:hover * {
+			color: {{HeaderTextColour}} !important;
+			}
+
+
+.Product:hover *, .PromoProduct:hover * {
+	background:{{ButtonTint}};
+	color:#000;
+	border-radius:{{BoxRadius}};
+	padding:0em;
+
+}
+
+#groupContainer .Product label:hover, #groupContainer .PromoProduct label:hover {
+	background:{{ButtonTint}};
+	color:#000;
+	border-radius:{{BoxRadius}};
+	margin-right:0px;
+
+
+}
+#SnapInfo {
+  background-color: #FFF;
+  width: 290px;
+  padding-top: 0em;
+  margin: 1.5em 0em 0em 0em;
+  border: solid 1px #ddd;
+}
+
+#SnapInfo p, #SnapInfo a { /* Fix: was '#SnapInfo p ,a' — the bare 'a' parsed as a global selector, overriding anchor colour site-wide */
+	color:#000;
+
+}
+#SnapInfo p {
+	margin-left:0.5em;
+	margin-right:0.5em;
+
+}
+#SnapInfo p.Snap {
+	color:{{GreyButtonColour}};
+	border-top:0px;
+	margin-left:1em;
+	font-size:0.8em;
+}
+#SnapInfo p.Snap a {
+	color:{{GreyButtonColour}};
+	border-top:0px;
+	margin-left:1em;
+	font-size:0.8em;
+}
+
+/* The venue information panel. The page emits .BranchInfoHeader and
+   .SnapInfoBody seven times each and neither had any rule, so the heading and
+   the address block had no separation or padding of their own. */
+.BranchInfoHeader {
+  border-bottom: solid 1px #ddd;
+  padding: 0.5em 0.25em;
+  margin-bottom: 0.5em;
+  overflow: hidden; /* contain the floated h2 */
+}
+
+.SnapInfoBody {
+  padding: 0 0.5em 0.5em;
+}
+
+.SnapInfoBody p {
+  margin: 0 0 0.9em 0;
+}
+
+.SnapInfoBody p:last-child {
+  margin-bottom: 0;
+}
+
+  #SnapInfo h2 {
+    float: left;
+    padding: 0 0.4em;
+    margin: 0 0 0.2em 0.25em;
+    font-size: 1.3rem;
+    color: {{ButtonColour}};
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700; /* Bold weight */
+  }
+
+.Footer {
+  padding: 2em;
+  background: {{GreyButtonColour}};
+  color: {{HeaderTextColour}};
+}
+
+.Footer a {
+	color:{{HeaderTextColour}};
+}
+
+/* Category tabs, built at runtime by H_ProductGrouping.js. These only had
+   colour and radius before, so the buttons rendered cramped and touching. */
+#buttonsContainer button.active {
+	background:{{ButtonColour}};
+	color:{{HeaderTextColour}};
+	border-radius:{{BoxRadius}};
+	border:solid 1px {{ButtonColour}};
+}
+
+#buttonsContainer button {
+	background:{{GreyButtonColour}};
+	color:#f4f4f4;
+	border-radius:{{BoxRadius}};
+	border:solid 1px {{GreyButtonColour}};
+	padding:0.5em 1em;
+	margin:0 0.4em 0.5em 0;
+	font-size:1rem;
+	font-weight:bold;
+	cursor:pointer;
+}
+
+#buttonsContainer button:hover {
+	background:{{GreyButtonHover}};
+	border-color:{{GreyButtonHover}};
+	color:{{HeaderTextColour}};
+}
+
+#buttonsContainer {
+	border:0;
+	word-break:break-word;
+	margin-bottom:0.5em;
+}
+
+fieldset {
+	padding:1.5em 2em 2em;
+}
+
+legend {
+  left: 0;
+  font-weight: 900;
+}
+
+label, .Label {
+	padding:0.5em 0 0.5em 0;
+	margin-right:20px;
+}
+
+.WideLabel {
+	display:inline-block;
+	padding:0.5em 0;
+}
+
+.WideSelect {
+	max-width:100%;
+}
+
+/* Validation output. Design.json ErrorColour {{ErrorColour}}. None of these had rules,
+   so error text inherited ordinary body colour and read as normal copy. */
+.ErrorSummary {
+  color: {{ErrorColour}};
+  border: solid 1px {{ErrorColour}};
+  border-radius: {{BoxRadius}};
+  background-color: {{ErrorTint}};
+  padding: 0.75em 1em;
+  margin: 0.6em 0;
+}
+
+.ErrorSummary ul { margin: 0.3em 0 0 1.2em; }
+.ErrorSummary li { color: {{ErrorColour}}; }
+
+.Error, .WideError {
+  color: {{ErrorColour}};
+  font-weight: bold;
+}
+
+.WideError {
+  display: block;
+}
+
+/* Design.json InfoIconColour / ErrorIconColour */
+.fa-info-circle { color: {{InfoIconColour}}; }
+.fa-exclamation-circle { color: {{ErrorIconColour}}; }
+
+#CurrentView h2 {
+	margin-left:1.5em;
+	padding-bottom:0;
+}
+
+.AddressList, .txtWide, .txtMedium, .txtNarrow, .txtVNarrow {
+	padding:0.6em;
+}
+
+/* Direct Debit mandate preview lays its two halves out as table cells; neither
+   had a width, so the columns sized unevenly off their content. */
+td.HalfL, td.HalfR {
+  width: 50%;
+  vertical-align: top;
+  padding-right: 1em;
+}
+
+#dob_d, #dob_m, #dob_y {
+	margin-top:0.8em;
+}
+
+em {
+	top:0.2em;
+}
+
+#Gender_0, #Gender_1, #HomePhone, #EmailConfirm, #MarketingSource, #CC_CardNumber, #AccountName, #AccountNumber, #AgreeCheckbox {
+	margin-top:1em;
+}
+
+#FindAddress {
+	font-size:1rem;
+	padding:0.4em 1.5em;
+}
+
+td.Right {
+	font-weight:bold;
+}
+
+.CheckOptsList input {
+	margin-top:1.05em;
+}
+
+#AgreeToConditions {
+	margin-top:1.1em;
+}
+
+#CC_CardType, #CC_Country {
+	box-sizing:content-box;
+}
+
+#helpCC-cardType {
+	margin-left:180px;
+	margin-top:0.2em;
+}
+
+ul {
+	margin:0.6em 0;
+}
+
+.FieldHelpText {
+	margin-left:180px;
+
+}
+
+.LabelRight {
+	float: left;
+	padding: 0.5em 0 0.5em 0;
+}
+
+@media screen and (max-width:960px) {
+	#MainForm {
+		width:100%;
+	}
+	#SnapInfo {
+		float:left;
+	}
+
+	#Title {
+		margin-bottom:1em;
+		box-sizing:content-box;
+	}
+
+	#Title, #TitleOther {
+		width:40%;
+	}
+
+	#CC_Expiry_M {
+	width:30%;
+}
+
+#CC_Expiry_Y {
+	width:50%;
+}
+
+#AddressResults {
+	display:inline;
+	box-sizing:content-box;
+	padding:10px;
+}
+
+#AddressResults select {
+	width:94%;
+	font-size:0.9rem;
+}
+}
+
+
+@media screen and (max-width:600px)	{
+p.Buttons .btnNext, p.Buttons .btnNext_Disabled, p.Buttons .btnConfirm, p.Buttons .btnConfirm_Disabled {
+		background:{{ButtonColour}};
+		border:0;
+	}
+
+#RHLinks a:hover, #FindAddress:hover, input[type='button']:hover, input[type='submit']:hover {
+	background:#e3e3e3;
+	color:#000;
+}
+
+.Product:hover *, .PromoProduct:hover * {
+	background:{{ButtonColour}};
+	color:{{HeaderTextColour}};
+	border-radius:{{BoxRadius}};
+	padding:0em;
+}
+
+#groupContainer .Product label:hover, #groupContainer .PromoProduct label:hover {
+	background:{{ButtonColour}};
+	color:{{HeaderTextColour}};
+	border-radius:{{BoxRadius}};
+	margin-right:0px;
+
+}
+
+#groupContainer .Product, #groupContainer .PromoProduct {
+	margin:0;
+}
+
+#HomePhone, #EmailConfirm, #MarketingSource, #CC_CardNumber, #AccountName, #AccountNumber, #AgreeCheckbox {
+	margin-top:0;
+}
+
+#buttonsContainer button {
+	font-size:1em;
+}
+
+h2.Head, h2.Current, h2.Foot, h2.Head b, h2.Current b, h2.Foot b {
+	font-size:1em;
+}
+
+fieldset {
+	padding: 1em 0.1em;
+	margin-top:0.2em;
+}
+
+fieldset legend {
+	font-size:1em;
+}
+
+#CurrentView h2 {
+	margin-left:0.4em;
+	font-size:1.1em;
+	color:{{ButtonColour}};
+}
+#groupContainer .Product {
+	margin-bottom:1em;
+
+}
+
+#groupContainer .PromoProduct {
+	margin-bottom:1em;
+
+}
+
+#groupContainer .Product label {
+	font-size:1em;
+
+}
+
+#TopBanner img {
+	height:70px;
+}
+
+#SnapInfo {
+	width:100%;
+	box-sizing:border-box;
+}
+
+.CheckOptsList input, #AgreeToConditions {
+	margin-top:0.5em;
+}
+
+div.FSWrap {
+	margin-top:0;
+	padding-top:0;
+}
+
+#CC_CardType, #CC_Country {
+	box-sizing: border-box;
+}
+
+
+
+#AgreeCheckbox {
+	margin:0.5em 0;
+}
+
+}
+
+.btnConfirmPaymentDisabled_Disabled {
+  background-color: #eee !important;
+  color: #ddd;
+  border-color: #ddd;
+  cursor: not-allowed;
+  margin-top: 16px !important;
+}
+
+.btnConfirmPaymentDisabled {
+  background-color: #eee !important;
+  color: #ddd;
+  border-color: #ddd;
+  cursor: not-allowed;
+  margin-top: 16px !important;
+}

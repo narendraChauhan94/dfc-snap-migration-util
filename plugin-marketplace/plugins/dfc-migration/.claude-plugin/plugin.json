@@ -1,0 +1,22 @@
+{
+  "name": "dfc-migration",
+  "displayName": "DFC to SNAP V2 migration",
+  "version": "0.1.1",
+  "description": "Migrate DFC customers to SNAP V2 portals with dfcmigrate.exe: pick a customer, check the data, create the portal after approval, report.",
+  "author": { "name": "Xplor Technologies" },
+  "userConfig": {
+    "tool_folder": {
+      "type": "directory",
+      "title": "DFC migration tool folder",
+      "description": "Folder that holds dist\\dfcmigrate.exe, Template\\ and dfcmigrate.settings.json (the SNAP Clients folder is set there).",
+      "default": "C:\\SourceCode\\Snap-Git\\DFCMigration",
+      "required": true
+    }
+  },
+  "mcpServers": {
+    "dfc": {
+      "command": "${user_config.tool_folder}/dist/dfcmigrate.exe",
+      "args": ["mcp"]
+    }
+  }
+}

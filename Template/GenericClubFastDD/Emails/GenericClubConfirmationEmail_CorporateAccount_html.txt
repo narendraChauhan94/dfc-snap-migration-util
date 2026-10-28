@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<style>
+body {color:#000000;font-family:Tahoma, Verdana, sans;font-weight: normal; }
+a {color: #0070C0;}
+a:link {text-decoration: none;}
+a:visited {text-decoration: none;}
+a:active {text-decoration: none;}
+a:hover {color: #0070C0;text-decoration:underline;}
+p {color: #000000; }
+</style>
+</head>
+<body>
+<p>Dear %TITLE% %SURNAME%</p>
+
+<p>%THANKYOUMESSAGE%</p>
+
+<p>
+%AGREEINGTOTEXT%
+</p>
+
+<p>
+Should you need it your reference number is %TransactionReferenceNumber% .
+</p>
+
+<p>HELPLINE NO. 01444 449166</p>
+
+<p>If any of the above details are incorrect or should you at some time in the future 
+experience problems making your payments when due, please contact the HELPLINE.  
+Please note that calls may be recorded.  Alternatively, you can write to us at the 
+address below, quoting reference no. %TransactionReferenceNumber%.</p>
+
+<p>PLEASE KEEP THESE DETAILS SAFE.  You might like to print this email or save it to 
+your computer's hard drive.</p>
+
+<br>
+<p>"Snap", "SnapDD", "SnapDDA", "Harlands" and "Harlands Group" are all trading styles of Harlands Services Ltd.</p>
+<p>Registered Office: 1st Floor, Central Square South, Orchard Street, Newcastle upon Tyne, NE1 3AZ</p>
+<p>Registered in England No. 2982925.   VAT Registration No. 799 7113 70.</p>
+</body></html>

@@ -1,0 +1,24 @@
+Dear %TITLE% %SURNAME%
+
+%THANKYOUMESSAGE%
+
+%AGREEINGTOTEXT%
+
+Should you need it your reference number is %TransactionReferenceNumber% .
+
+HELPLINE NO. 01444 449166
+ 
+If any of the above details are incorrect or should you at some time in
+the future experience problems making your payments when due, please 
+contact the HELPLINE.  Please note that calls may be recorded.  
+Alternatively, you can write to us at the address below, quoting reference 
+no. %TransactionReferenceNumber%
+
+PLEASE KEEP THESE DETAILS SAFE.  You might like to print this email or 
+save it to your computer's hard drive.
+
+
+
+"Snap", "SnapDD", "SnapDDA" and "Harlands" are all trading styles of Harlands Services Ltd. 
+Registered Office: 1st Floor, Central Square South, Orchard Street, Newcastle upon Tyne, NE1 3AZ Registered in England No. 2982925.    
+VAT Registration No. 799 7113 70.

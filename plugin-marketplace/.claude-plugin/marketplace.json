@@ -1,0 +1,12 @@
+{
+  "name": "xplor-dfc-migration",
+  "owner": { "name": "Xplor - DFC to SNAP V2 migration" },
+  "description": "Internal Xplor plugins for migrating DFC customers to SNAP V2 portals.",
+  "plugins": [
+    {
+      "name": "dfc-migration",
+      "source": "./plugins/dfc-migration",
+      "description": "Migrate DFC customers to SNAP V2 portals: pick a customer, check the data, create the portal after approval, report."
+    }
+  ]
+}

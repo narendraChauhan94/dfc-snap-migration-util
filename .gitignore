@@ -1,0 +1,8 @@
+bin/
+obj/
+dist/
+Output/
+Logs/
+Workbooks/
+Backups/
+dfcmigrate.settings.json

@@ -1,0 +1,94 @@
+<html><head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<style>
+body {color:#000000;font-family:Tahoma, Verdana, sans;font-weight: normal; }
+a {color: #0070C0;}
+a:link {text-decoration: none;}
+a:visited {text-decoration: none;}
+a:active {text-decoration: none;}
+a:hover {color: #0070C0;text-decoration:underline;}
+p {color: #000000; }
+</style>
+</head>
+<body>
+<p>Dear %TITLE% %SURNAME%</p>
+
+<p>%THANKYOUMESSAGE%</p>
+
+<p>
+%AGREEINGTOTEXT%
+</p>
+
+<p>You have chosen to pay by monthly Direct Debit and we can confirm that the 
+Direct Debit details provided by you are correct.</p>
+
+<P align="right"><img src = "https://www.snapdda.co.uk/images/d1_dd.gif" 
+width="94" height="30" border = "0"></p><br><br>
+
+<table border="1"><tr><td><p>IMPORTANT  - Confirmation of the set-up of your 
+Direct Debit instruction, including future payment schedule</p></td></tr></table>
+
+<p>Account name: %ACCOUNTNAME%<br>
+Sort Code: %SORTCODE%<br>
+Account No.: %ACCOUNTNUMBER%<br>
+Reference: %TransactionReferenceNumber%<br>
+Service User Number: %OriginatorNumber%<br>
+Service User Name: %OriginatorName%</p>
+
+<p>Your first payment will be collected on or just after %CALCULATEDFIRSTPAYMENTDATE% 
+for an amount of &pound;%CALCULATEDFIRSTPAYMENTAMOUNTPENCE%.</p>
+
+<p>Subsequent monthly payments of &pound;%MonthlyMembershipFeePence% will commence on
+%CalculatedSecondPaymentDate% and continue on or just after the same day of each month 
+thereafter.</p>
+
+<p>Please note that your membership payments for %CLUBNAME% will appear on your bank 
+statements as %OriginatorName%  with the reference %TransactionReferenceNumber%</p>
+
+<p>Your Direct Debit payments are protected with a moneyback guarantee and you will 
+receive 3 working days advance notice of any changes. You have the right to cancel 
+your Direct Debit Instruction at any time simply by writing to your Bank or Building 
+Society, with a copy to us.</p>
+
+<p>Please note that if you completed this membership agreement whilst not in the club, 
+you have a period of 14 days from today in which to cancel this membership. This right 
+to cancel will cease once you visit the club, or the period of 14 days has elapsed, whichever 
+is the earlier.</p>
+
+<p>HELPLINE NO. 01444 449166<BR>
+ </p>
+
+<p>If any of the above details are incorrect or should you at some time in the future 
+experience problems making your payments when due, please contact the HELPLINE.  
+Please note that calls may be recorded.  Alternatively, you can write to us at the 
+address below, quoting reference no. %TransactionReferenceNumber%.</p>
+
+<p>PLEASE KEEP THESE DETAILS SAFE.  You might like to print this email or save it to 
+your computer's hard drive.</p>
+
+<p>Please note that your payments will be protected by the Direct Debit Guarantee 
+(see below).</p>
+
+<p align="right"><img src = "https://www.snapdda.co.uk/images/d1_dd.gif" width="94" 
+height="30" border = "0"></p>
+
+<p><b>The Direct Debit Guarantee:</b></p>
+<ul>
+<li><p>This Guarantee is offered by all Banks and Building Societies that accept instructions to pay Direct Debits.</p></li>
+<li><p>If there are any changes to the amount, date or frequency of your Direct Debit %OriginatorName% will
+notify you 3 working days in advance of your account being debited or as otherwise agreed. If you
+request %OriginatorName% to collect a payment, confirmation of the amount and date will be given
+to you at the time of the request.</p></li>
+<li><p>If an error is made in the payment of your Direct Debit, by %OriginatorName% or by
+your Bank or Building Society, you are entitled to a full and immediate refund of the amount paid from
+your Bank or Building Society.</p></li>
+<ul><li><p>If you receive a refund you are not entitled to, you must pay it back when
+%OriginatorName% asks you to.</p></li></ul>
+<li><p>You can cancel a Direct Debit at any time by simply contacting your Bank or Building
+Society. Written confirmation may be required. Please also notify us.</p></li>
+</ul>
+<BR>
+<P>"Snap", "SnapDD", "SnapDDA", "Harlands" and "Harlands Group" are all trading styles of Harlands Services Ltd.</P>
+<p>Registered Office: 1st Floor, Central Square South, Orchard Street, Newcastle upon Tyne, NE1 3AZ</p>
+<P>Registered in England No. 2982925.   VAT Registration No. 799 7113 70.</P>
+</body></html>
