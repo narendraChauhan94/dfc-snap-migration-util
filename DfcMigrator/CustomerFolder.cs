@@ -15,6 +15,10 @@ public record Venue(int Id, int PortalId, string Name, string ClubRef, string[] 
 public record Plan(int Id, int PortalId, string Name, decimal Fee, int Term, decimal JoinFee, string LetterType, string ClubRef,
     int Active, string PromoCode, string EndDate, string ApiFrequency, string ApiDuration, int CardPayOneOff, int CategoryId, int MinAge);
 
+// DFC plan bolton (optional extra on a plan). PortalId = Club.Id. ExtraUsers = the four ExtraUsers* counts added up (no SNAP equivalent).
+public record Bolton(int PlanId, int PortalId, int Id, string Name, string Description, decimal InitialFee, decimal RollingFee,
+    int Active, string EndDate, int SortOrder, int ExtraUsers, int IncProRata);
+
 public record Category(int Id, string Name, int SortOrder);
 
 public record Design(int PortalId, string ButtonColour, string GreyButtonColour, string ErrorColour, string InfoIconColour, string ErrorIconColour, string Logo,
@@ -31,7 +35,8 @@ public record MerchantRow(int Row, string UrlType, string ClubId, string ClubUrl
 /// <summary>One customer in an all-customer folder, for the pick list.</summary>
 public record CustomerSummary(int CustomerId, string Name, int Portals, int Venues, int Plans, bool HasDesign, int MerchantRows)
 {
-    public List<string> Missing => new[] { (Venues == 0, "venues"), (Plans == 0, "plans"), (!HasDesign, "design"), (MerchantRows == 0, "merchant IDs") }
+    // No venues is not missing data: such a portal is migrated as a single branch (see Planner.BuildBranches).
+    public List<string> Missing => new[] { (Plans == 0, "plans"), (!HasDesign, "design"), (MerchantRows == 0, "merchant IDs") }
         .Where(m => m.Item1).Select(m => m.Item2).ToList();
 }
 
@@ -47,6 +52,7 @@ public class CustomerFolder
     public List<Club> Clubs { get; } = [];
     public List<Venue> Venues { get; } = [];
     public List<Plan> Plans { get; } = [];
+    public List<Bolton> Boltons { get; } = [];
     public List<Category> Categories { get; } = [];
     public List<Design> Designs { get; } = [];
     public List<MerchantRow> Merchant { get; } = [];
@@ -73,7 +79,9 @@ public class CustomerFolder
         ("Categories", ["Category", "ParentCategoryID"]),
         ("Design", ["ButtonColour", "Logo"]),
         ("Merchant IDs (JSON)", ["MerchantHNK", "NewUrl", "VenueID"]),
+        (BoltonsRole, ["PlanID", "BoltonID", "BoltonRollingFee"]),
     ];
+    const string BoltonsRole = "Plan add-ons (boltons)";
     const string Manifest = "Manifest";
     // An export cut at a fixed row limit looks complete; a file of exactly N x 10,000 rows without a manifest is suspicious.
     const int SuspiciousRowBlock = 10_000;
@@ -127,7 +135,8 @@ public class CustomerFolder
             var found = role.StartsWith("Merchant")
                 ? roles.GetValueOrDefault("Merchant sheet", []).Concat(roles.GetValueOrDefault("Merchant IDs (JSON)", [])).ToList()
                 : roles.GetValueOrDefault(role, []);
-            if (found.Count == 0) cf.Errors.Add($"Missing: no {role} file found in the folder.");
+            // Branches are optional: a customer without venues is migrated as single-branch portals. Boltons are optional extras.
+            if (found.Count == 0 && role is not ("Branches (venues)" or BoltonsRole)) cf.Errors.Add($"Missing: no {role} file found in the folder.");
             else if (found.Count > 1 && role != "Plans") cf.Errors.Add($"Ambiguous: {found.Count} {role} files ({string.Join(", ", found)}) - keep only one.");
         }
         if (roles.GetValueOrDefault(Manifest, []).Count > 1) cf.Errors.Add("Ambiguous: more than one manifest file - keep only one.");
@@ -161,7 +170,7 @@ public class CustomerFolder
         var actualTotals = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
         {
             ["Plans"] = Plans.Count, ["Clubs"] = Clubs.Count, ["Venues"] = Venues.Count, ["Categories"] = Categories.Count,
-            ["Designs"] = Designs.Count, ["Merchant"] = Merchant.Count,
+            ["Designs"] = Designs.Count, ["Merchant"] = Merchant.Count, ["Boltons"] = Boltons.Count,
         };
         foreach (var (name, expected) in manifestTotals)
             if (!actualTotals.TryGetValue(name, out var actual)) Warnings.Add($"Manifest total '{name}' is not a known record type - ignored.");
@@ -196,12 +205,12 @@ public class CustomerFolder
         cf.Clubs.AddRange(portals);
         cf.Venues.AddRange(Venues.Where(v => ids.Contains(v.PortalId)));
         cf.Plans.AddRange(Plans.Where(p => ids.Contains(p.PortalId)));
+        cf.Boltons.AddRange(Boltons.Where(b => ids.Contains(b.PortalId)));
         cf.Categories.AddRange(Categories);
         cf.Designs.AddRange(Designs.Where(d => ids.Contains(d.PortalId)));
         cf.Merchant.AddRange(MerchantFor(customerId, portals));
 
         var who = $"Customer {customerId} ({portals[0].Name})";
-        if (cf.Venues.Count == 0) cf.Errors.Add($"{who}: no venues in the Branches file.");
         if (cf.Plans.Count == 0) cf.Errors.Add($"{who}: no plans in the plan files - the plan export may be incomplete.");
         if (cf.Merchant.Count == 0) cf.Errors.Add($"{who}: no merchant/beneficiary rows.");
 
@@ -260,6 +269,11 @@ public class CustomerFolder
                     Designs.AddRange(rows.Select(r => new Design(r.Int("ClubID"), r.Str("ButtonColour"), r.Str("GreyButtonColour"), r.Str("ErrorColour"),
                         r.Str("InfoIconColour"), r.Str("ErrorIconColour"), r.Str("Logo"), r.Str("BackgroundColour"), r.Str("TextColour"),
                         r.Str("HeaderTextColour"), r.Str("InternalBGColour"), r.Str("LogoAlign"), r.Str("BoxStyle"), r.Str("Glow_thickness"), r.Str("Border_thickness"))));
+                    break;
+                case BoltonsRole:
+                    Boltons.AddRange(rows.Select(r => new Bolton(r.Int("PlanID"), r.Int("ClubID"), r.Int("BoltonID"), r.Str("BoltonName"), r.Str("BoltonDescription"),
+                        r.Dec("BoltonInitialFee"), r.Dec("BoltonRollingFee"), r.Int("BoltonActive"), r.Str("BoltonEndDate"), r.Int("BoltonSortOrder"),
+                        r.Int("ExtraUsersAdults") + r.Int("ExtraUsersJuniors") + r.Int("ExtraUsersAdultsMand") + r.Int("ExtraUsersJuniorsMand"), r.Int("IncProRata"))));
                     break;
                 case "Merchant IDs (JSON)":
                     // IDs must be JSON strings: a number loses the 16th digit of a merchant ID (MerchantIsText = false -> planner error).

@@ -114,7 +114,19 @@ public static class SiteGenerator
         products.RemoveNodes();
         var ordered = page.Branches.SelectMany(b => b.Products)
             .OrderBy(p => p.CategorySort).ThenBy(p => p.CategoryName, StringComparer.Ordinal).ThenBy(p => p.ClubRef, StringComparer.Ordinal).ThenBy(p => p.Name, StringComparer.Ordinal);
-        foreach (var p in ordered) products.Add(BuildProduct(new XElement(bases[p.OneOff ? "oneoff_product" : "monthly_product"]), p, page));
+        foreach (var p in ordered) products.Add(BuildProduct(new XElement(bases[p.OneOff ? "oneoff_product" : "monthly_product"]), p, page, g));
+
+        // Add-ons used on this page (from DFC boltons), in the form existing SNAP clients use (e.g. Trilogy charity add-ons).
+        var addOns = Required(root, "AddOns");
+        addOns.RemoveNodes();
+        var onPage = page.Branches.SelectMany(b => b.Products).SelectMany(p => p.AddOnIds ?? []).ToHashSet();
+        foreach (var a in (site.AddOns ?? []).Where(a => onPage.Contains(a.Id)))
+            addOns.Add(new XElement("AddOn", new XAttribute("ID", a.Id),
+                new XElement("AddOnPaymentType", "AllPayments"),
+                new XElement("ChargingBasis", a.Repeating ? "Repeating" : "OneOff"),
+                new XElement("Description", a.Description),
+                new XElement("DescriptionLong", a.DescriptionLong),
+                new XElement("PriceInPence", a.PricePence)));
 
         // Branches: one per migrated venue, cloned from the template branch.
         var branches = Required(root, "Branches");
@@ -143,9 +155,21 @@ public static class SiteGenerator
         return ("<?xml version=\"1.0\"?>\n" + sb + "\n").Replace("\r\n", "\n").Replace("\n", nl);
     }
 
-    static XElement BuildProduct(XElement e, ProductPlan p, PagePlan page)
+    static XElement BuildProduct(XElement e, ProductPlan p, PagePlan page, XElement globals)
     {
         e.SetAttributeValue("ID", p.Id);
+        if (p.AddOnIds is { Count: > 0 } ids)
+        {
+            e.AddFirst(new XElement("AddOnIDs", ids.Select(id => new XElement("item", id))));
+            // The global payment summary shows the membership fee only; with add-ons the amounts taken are the totals.
+            // %CALCULATEDFIRSTPAYMENTAMOUNTPENCE% already includes add-ons; %TOTALRECURRINGAMOUNT% = membership + repeating add-ons.
+            const string Fee = "%MONTHLYMEMBERSHIPFEEPENCE%";
+            e.Add(new XElement("DDDescription", Swap(Required(globals, "DDDescription").Value, Fee, "%TOTALRECURRINGAMOUNT%", "DDDescription")));
+            var bank = Swap(Required(globals, "DDBankConfirmation").Value, "payments of &pound;" + Fee, "payments of &pound;%TOTALRECURRINGAMOUNT%", "DDBankConfirmation");
+            bank = Swap(bank, Fee + " membership fee</li>", Fee + " membership fee</li><li>&pound;%ADDONONEOFFPAYMENTAMOUNT% one-off add-ons</li>"
+                + "<li>&pound;%ADDONRECURRINGPAYMENTAMOUNT% add-ons</li>", "DDBankConfirmation");
+            e.Add(new XElement("DDBankConfirmation", bank));
+        }
         SetText(Required(e, "ProductDescription"), p.Name);
         SetText(Required(e, "ProductDescriptionLong"), p.Name);
         SetText(Required(e, "ProductDescriptionLongHTML"), p.DescriptionHtml);
@@ -164,6 +188,10 @@ public static class SiteGenerator
         parent.Element(name) ?? throw new TemplateException($"<{parent.Name}> has no <{name}>");
 
     static void SetText(XElement e, string value) { e.RemoveNodes(); e.Value = value; }
+
+    // Fails loudly if the template text changed, rather than silently leaving add-ons out of what the member is told.
+    static string Swap(string text, string find, string replace, string where) =>
+        text.Contains(find) ? text.Replace(find, replace) : throw new TemplateException($"GlobalSettings <{where}> no longer contains '{find}' - add-on amounts cannot be shown");
 
     // ------------------------------------------------------------------ aspx
 

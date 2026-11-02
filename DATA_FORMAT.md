@@ -8,6 +8,7 @@ Files are recognised by their **content**, not their names, so the names below a
 | Club, Venue, Plan category, Design | DFC JSON exports, unchanged | ✅ Same as today |
 | Plans | DFC JSON export, split into as many files as needed: `DFC All Plan 1.json` … `DFC All Plan N.json` | ✅ Any number of files. Each plan `ID` must appear in only one file. |
 | Merchant and beneficiary IDs | `DFC All Merchant.json` (section 1) | New, replaces the Excel sheet |
+| Plan add-ons (boltons) | DFC JSON export, one record per plan x bolton: `PlanID`, `ClubID` (portal), `BoltonID`, `BoltonName`, `BoltonDescription`, `BoltonInitialFee`, `BoltonRollingFee`, `BoltonActive`, `BoltonEndDate`, `BoltonSortOrder`, `ExtraUsers*`, `IncProRata` | Optional - recognised by `PlanID` + `BoltonID` + `BoltonRollingFee` |
 | BMS (external service) | `DFC All BMS.json` (section 2) | New |
 | Manifest | `_manifest.json` (section 3) | New. Lets the agent prove nothing was cut off. |
 | Logos | `Logos\<ClubID>.<jpg/png>` (portal ID) | Optional |

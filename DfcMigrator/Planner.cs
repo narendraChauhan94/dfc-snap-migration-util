@@ -5,7 +5,10 @@ using System.Text.RegularExpressions;
 namespace DfcMigrator;
 
 public record ProductPlan(string Id, string Name, bool OneOff, int ContractMonths, int? OneOffMonths, long FeePence, long JoinFeePence,
-    int MinAge, string DescriptionHtml, int DfcPlanId, int CategorySort, string CategoryName, string ClubRef);
+    int MinAge, string DescriptionHtml, int DfcPlanId, int CategorySort, string CategoryName, string ClubRef, IReadOnlyList<string>? AddOnIds = null);
+
+/// <summary>A SNAP add-on made from a DFC bolton fee: optional extra the member ticks; Repeating = added to every payment, else to the first.</summary>
+public record AddOnPlan(string Id, string Description, string DescriptionLong, bool Repeating, long PricePence);
 
 public record BranchPlan(string Id, Venue Venue, string MerchantId, string BeneficiaryId, string NotifyEmails, List<ProductPlan> Products);
 
@@ -17,7 +20,7 @@ public record ConfigValue(string Value, string? Note = null);
 
 /// <param name="Globals">Global settings per portal (Club.Id). The reference pages share the same values except each portal's own notes.</param>
 public record SitePlan(string Folder, string CustomerName, Club WebClub, List<PagePlan> Pages, Dictionary<int, Dictionary<string, ConfigValue>> Globals,
-    Dictionary<string, string> Colours, string? LogoFile);
+    Dictionary<string, string> Colours, string? LogoFile, IReadOnlyList<AddOnPlan>? AddOns = null);
 
 public class MigrationPlan
 {
@@ -72,6 +75,7 @@ public static class Planner
         // ---- portals -> pages: the merchant sheet says which portals are migrated and their exact URL (= folder + page name)
         string? folder = null;
         var pages = new List<PagePlan>();
+        var addOns = BuildAddOns(data, today, plan);
         foreach (var g in data.Merchant.GroupBy(m => m.ClubUrl, StringComparer.OrdinalIgnoreCase))
         {
             var first = g.First();
@@ -89,7 +93,7 @@ public static class Planner
             if (!Regex.IsMatch(folder, "^[A-Za-z0-9]+$") || !Regex.IsMatch(m.Groups[2].Value, "^[A-Za-z0-9_-]+$"))
             { err.Add($"{first.Cell("New URL")}: folder/page must be letters and digits ('{folder}/{m.Groups[2].Value}')."); continue; }
             if (portal.CollectionDays.Length == 0) err.Add($"Club file, portal {portal.Id}: no PayDate1/8/15/25 is 'Y' - collection days unknown.");
-            pages.Add(new PagePlan(portal, type, m.Groups[2].Value, BuildBranches(g.ToList(), portal, data, today, plan), portal.CollectionDays));
+            pages.Add(new PagePlan(portal, type, m.Groups[2].Value, BuildBranches(g.ToList(), portal, data, today, plan, addOns), portal.CollectionDays));
         }
         foreach (var dup in pages.GroupBy(p => p.PageName, StringComparer.OrdinalIgnoreCase).Where(g => g.Count() > 1))
             err.Add($"Merchant sheet: two portals would both create {dup.Key}.aspx.");
@@ -158,11 +162,39 @@ public static class Planner
         }
         if (data.LogoFile is null && design?.Logo is { Length: > 0 } l) plan.ActionItems.Add($"Logo: DFC used '{l}' - put the customer logo image in the data folder.");
 
-        plan.Site = new SitePlan(folder, club.Name, club, pages, globals, colours, data.LogoFile);
+        // Add-ons on the migrated products; a bolton shared by several plans is defined once, so its fees must agree.
+        var used = pages.SelectMany(p => p.Branches).SelectMany(b => b.Products).Where(p => p.AddOnIds is not null)
+            .Select(p => p.DfcPlanId).Distinct().SelectMany(id => addOns[id]).ToList();
+        foreach (var clash in used.GroupBy(a => a.Id).Where(g => g.Distinct().Count() > 1))
+            err.Add($"Bolton add-on {clash.Key}: different fees or wording on different plans - one SNAP add-on has one price.");
+        if (used.Count > 0) plan.Info.Add($"{used.Select(a => a.Id).Distinct().Count()} add-on(s) from DFC boltons, offered as optional extras.");
+
+        plan.Site = new SitePlan(folder, club.Name, club, pages, globals, colours, data.LogoFile, used.DistinctBy(a => a.Id).ToList());
         return plan;
     }
 
-    static List<BranchPlan> BuildBranches(List<MerchantRow> rows, Club portal, CustomerFolder data, DateOnly today, MigrationPlan plan)
+    /// <summary>DFC boltons -> SNAP add-ons per DFC plan ID. One SNAP add-on has one price, so an initial and a rolling fee become two add-ons.</summary>
+    static Dictionary<int, List<AddOnPlan>> BuildAddOns(CustomerFolder data, DateOnly today, MigrationPlan plan)
+    {
+        var map = new Dictionary<int, List<AddOnPlan>>();
+        foreach (var b in data.Boltons.OrderBy(b => b.SortOrder).ThenBy(b => b.Id))
+        {
+            string where = $"Plan {b.PlanId} bolton {b.Id} '{b.Name}'";
+            if (b.Active != 1 || Ended(b.EndDate, today)) { plan.Info.Add($"{where}: inactive or expired - not migrated."); continue; }
+            if (b.InitialFee <= 0 && b.RollingFee <= 0) { plan.Warnings.Add($"{where}: no initial or rolling fee - not migrated."); continue; }
+            if (b.ExtraUsers > 0) plan.Warnings.Add($"{where}: extra users (adults/juniors) have no SNAP add-on equivalent - not migrated, set up by hand if needed.");
+            if (b.IncProRata == 1) plan.Warnings.Add($"{where}: pro-rata is not applied to SNAP add-ons.");
+            var list = map.TryGetValue(b.PlanId, out var l) ? l : map[b.PlanId] = [];
+            var text = b.Description != "" ? b.Description : b.Name;
+            if (b.InitialFee > 0) list.Add(new($"bolton_{b.Id}_initial", b.Name, $"{text} &pound;{Money(b.InitialFee)} one-off", false, Pence(b.InitialFee)));
+            if (b.RollingFee > 0) list.Add(new($"bolton_{b.Id}_rolling", b.Name, $"{text} &pound;{Money(b.RollingFee)} each payment", true, Pence(b.RollingFee)));
+        }
+        return map;
+    }
+
+    static string Money(decimal v) => v.ToString("0.00", CultureInfo.InvariantCulture);
+
+    static List<BranchPlan> BuildBranches(List<MerchantRow> rows, Club portal, CustomerFolder data, DateOnly today, MigrationPlan plan, Dictionary<int, List<AddOnPlan>> addOns)
     {
         var err = plan.Errors;
         var branches = new List<BranchPlan>();
@@ -170,14 +202,22 @@ public static class Planner
         foreach (var r in rows)
         {
             var venue = data.Venues.FirstOrDefault(v => v.Id.ToString() == r.VenueId && v.PortalId == portal.Id);
+            // A portal with no venues in DFC (and no Branch_ID on its row) is a single portal: one branch made from the portal itself, with all its plans.
+            bool single = venue is null && r.VenueId == "" && data.Venues.All(v => v.PortalId != portal.Id);
+            if (single)
+            {
+                venue = new Venue(0, portal.Id, portal.Name, "", portal.Address == "" ? [] : portal.Address.Split(", "), "",
+                    portal.NotifyEmail != "" ? portal.NotifyEmail : portal.Email, "", portal.Welcome);
+                plan.Info.Add($"Portal {portal.Id} has no venues in DFC - migrated as a single branch named after the portal.");
+            }
             if (venue is null) { err.Add($"{r.Cell("Branch_ID")}: venue {r.VenueId} is not in the Branches file for portal {portal.Id}."); continue; }
             // Site ref is an optional cross-check: the merchant JSON may omit it.
-            if (r.SiteRef != "" && venue.ClubRef != r.SiteRef) { err.Add($"{r.Cell("Site Ref (Venue-wise)")}: '{r.SiteRef}' does not match venue {venue.Id} site ref {venue.ClubRef}."); continue; }
+            if (!single && r.SiteRef != "" && venue.ClubRef != r.SiteRef) { err.Add($"{r.Cell("Site Ref (Venue-wise)")}: '{r.SiteRef}' does not match venue {venue.Id} site ref {venue.ClubRef}."); continue; }
             if (!r.MerchantIsText) err.Add($"{r.Cell("Merchant HNK")}: stored as a number, so Excel may have dropped the 16th digit ({r.MerchantId}). Format the column as Text and re-enter the exact merchant ID.");
             else if (!Merchant16.IsMatch(r.MerchantId)) err.Add($"{r.Cell("Merchant HNK")}: '{r.MerchantId}' must be exactly 16 digits.");
             if (!Regex.IsMatch(r.BeneficiaryId, @"^\d+$")) err.Add($"{r.Cell("Beneficiary ID")}: '{r.BeneficiaryId}' must be a whole number.");
 
-            var plans = data.Plans.Where(p => p.PortalId == portal.Id && p.ClubRef == venue.ClubRef).ToList();
+            var plans = data.Plans.Where(p => p.PortalId == portal.Id && (single || p.ClubRef == venue.ClubRef)).ToList();
             int promo = plans.Count(p => p.PromoCode != ""), inactive = plans.Count(p => p.Active != 1), expired = plans.Count(p => Expired(p, today));
             // Promo-code plans are left out: the migrated site runs with UsePromoCodes=False (reference: only test/legacy plans had codes).
             var eligible = plans.Where(p => p.Active == 1 && p.PromoCode == "" && !Expired(p, today)).ToList();
@@ -187,7 +227,8 @@ public static class Planner
 
             var products = new List<ProductPlan>();
             foreach (var p in eligible)
-                if (MapProduct(p, data, err) is { } prod) products.Add(prod);
+                if (MapProduct(p, data, err) is { } prod)
+                    products.Add(addOns.TryGetValue(p.Id, out var a) && a.Count > 0 ? prod with { AddOnIds = a.Select(x => x.Id).ToList() } : prod);
             foreach (var dup in products.GroupBy(p => p.Id).Where(x => x.Count() > 1))
                 err.Add($"Portal {portal.Id}: plans {string.Join(", ", dup.Select(d => d.DfcPlanId))} at site ref {venue.ClubRef} have the same name '{dup.First().Name}' - product ID would clash.");
             branches.Add(new BranchPlan(BranchId(venue.Name), venue, r.MerchantId, r.BeneficiaryId, EmailList(venue.Email), products));
@@ -226,8 +267,11 @@ public static class Planner
 
     static long Pence(decimal v) => (long)Math.Round(v * 100, MidpointRounding.AwayFromZero);
 
-    static bool Expired(Plan p, DateOnly today) =>
-        p.EndDate.Length >= 10 && DateOnly.TryParse(p.EndDate[..10], CultureInfo.InvariantCulture, out var end) && end < today;
+    static bool Expired(Plan p, DateOnly today) => Ended(p.EndDate, today);
+
+    // DFC writes "0000-00-00 00:00:00" for "no end date", which does not parse and so never counts as ended.
+    static bool Ended(string endDate, DateOnly today) =>
+        endDate.Length >= 10 && DateOnly.TryParse(endDate[..10], CultureInfo.InvariantCulture, out var end) && end < today;
 
     /// <summary>Product ID = site ref + plan name, e.g. 4130_adult_all_inclusive_monthly_dd_membership.</summary>
     public static string ProductId(Plan p) => $"{p.ClubRef}_{Slug(p.Name)}";

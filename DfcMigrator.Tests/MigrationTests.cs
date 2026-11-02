@@ -76,7 +76,7 @@ public sealed class MigrationTests : IDisposable
 
     sealed class Fixture
     {
-        public List<object> Clubs = [], Venues = [], Plans = [], Categories = [], Designs = [];
+        public List<object> Clubs = [], Venues = [], Plans = [], Categories = [], Designs = [], Boltons = [];
         public List<object[]> Merchant = [];
     }
 
@@ -134,6 +134,15 @@ public sealed class MigrationTests : IDisposable
         CardPayOneOff = oneOff == "" ? 0 : 1, CategoryID = category, MinAge = 18,
     };
 
+    // Same shape as the DFC "Plan Add on data" export: IDs as strings, fees as numbers.
+    static object Bolton(int plan, int portal, int id, string name, decimal initial = 0m, decimal rolling = 0m, int active = 1, int extraAdults = 0) => new
+    {
+        PlanID = plan.ToString(), ClubID = portal.ToString(), PlanName = "x", PlanFee = 10m, PlanStartDate = "0000-00-00 00:00:00", PlanEndDate = "0000-00-00 00:00:00",
+        PlanActive = 1, BoltonID = id.ToString(), BoltonName = name, BoltonDescription = name, BoltonInitialFee = initial, BoltonRollingFee = rolling,
+        BoltonStartDate = "0000-00-00 00:00:00", BoltonEndDate = "0000-00-00 00:00:00", BoltonActive = active, BoltonSortOrder = 0,
+        ExtraUsersAdults = extraAdults, ExtraUsersJuniors = 0, ExtraUsersAdultsMand = 0, ExtraUsersJuniorsMand = 0, IncProRata = 0,
+    };
+
     static object[] MerchantRow(string type, string url, int venue, string siteRef, string mid, string beneficiary, string page) =>
         [type, url, venue, siteRef, mid, beneficiary, $"https://www.snapdda.co.uk/{page}.aspx"];
 
@@ -144,6 +153,7 @@ public sealed class MigrationTests : IDisposable
         Directory.CreateDirectory(d);
         void J(string name, object rows) => File.WriteAllText(Path.Combine(d, name), JsonSerializer.Serialize(rows));
         J("a1.json", f.Clubs); J("venues export.json", f.Venues); J("p.json", f.Plans); J("cats.json", f.Categories); J("look.json", f.Designs);
+        if (f.Boltons.Count > 0) J("extras.json", f.Boltons);
         if (merchantJson)
         {
             // DATA_FORMAT.md section 1: ClubID = portal ID (looked up from the venue), IDs as strings.
@@ -164,7 +174,7 @@ public sealed class MigrationTests : IDisposable
             int r = 2;
             foreach (var m in f.Merchant)
             {
-                ws.Cell(r, 1).Value = (string)m[0]; ws.Cell(r, 2).Value = 900; ws.Cell(r, 3).Value = (string)m[1]; ws.Cell(r, 4).Value = (int)m[2];
+                ws.Cell(r, 1).Value = (string)m[0]; ws.Cell(r, 2).Value = 900; ws.Cell(r, 3).Value = (string)m[1]; if ((int)m[2] != 0) ws.Cell(r, 4).Value = (int)m[2];
                 ws.Cell(r, 5).Value = (string)m[3];
                 if (merchantAsText) ws.Cell(r, 6).SetValue((string)m[4]); else ws.Cell(r, 6).Value = double.Parse((string)m[4]);
                 ws.Cell(r, 7).Value = (string)m[5]; ws.Cell(r, 8).Value = (string)m[6];
@@ -244,6 +254,52 @@ public sealed class MigrationTests : IDisposable
         Assert.Equal(["northgate", "northgate_annual"], web.Branches.Select(b => b.Id));
         Assert.Contains(plan.Info, i => i.Contains("Southbank Leisure Centre: no eligible plans"));
         Assert.Equal("TestSiteInternal", plan.Site.Pages.Single(p => p.Type == "Internal").PageName);
+    }
+
+    [Fact]
+    public void PortalWithoutVenues_BecomesOneBranch_WithAllItsPlans()
+    {
+        var f = new Fixture();
+        f.Clubs.Add(Club(10, "TestLeisure", "Test Leisure"));
+        f.Categories.Add(new { id = 1, ClubID = 10, Category = "Adult Memberships", ParentCategoryID = 0, CategorySortOrder = 0 });
+        f.Plans.Add(Plan(1, 10, "900", "Adult Monthly DD", 30m));
+        f.Plans.Add(Plan(2, 10, "900", "Adult 12 Month DD", 25m, term: 12));
+        f.Designs.Add(Design(10));
+        f.Merchant.Add(MerchantRow("Websales", "TestLeisure", 0, "", "1111000000000015", "7000001", "TestSite/TestSite")); // no Branch_ID
+        var (plan, _) = Run(Write(f));
+        var branch = plan.Site!.Pages.Single().Branches.Single();
+        Assert.Equal("Test Leisure", branch.Venue.Name);
+        Assert.Equal(2, branch.Products.Count);
+        Assert.Contains(plan.Info, i => i.Contains("no venues in DFC"));
+    }
+
+    [Fact]
+    public void Boltons_BecomeOptionalAddOns_OnTheirPlansProducts()
+    {
+        var f = Customer();
+        f.Boltons.Add(Bolton(1, 10, 530, "Towel Hire", initial: 5m, rolling: 2.5m));
+        f.Boltons.Add(Bolton(2, 10, 530, "Towel Hire", initial: 5m, rolling: 2.5m)); // same bolton on another plan -> defined once
+        f.Boltons.Add(Bolton(1, 10, 531, "Old Extra", rolling: 1m, active: 0));
+        f.Boltons.Add(Bolton(2, 10, 532, "Family", rolling: 3m, extraAdults: 1));
+        var (plan, r) = Run(Write(f));
+        var cfg = Config(r, "TestSite.config");
+
+        var addOns = cfg.Element("AddOns")!.Elements("AddOn").ToDictionary(a => (string)a.Attribute("ID")!);
+        Assert.Equal(["bolton_530_initial", "bolton_530_rolling", "bolton_532_rolling"], addOns.Keys.Order());
+        Assert.Equal(("OneOff", "500", "AllPayments"), ((string)addOns["bolton_530_initial"].Element("ChargingBasis")!, (string)addOns["bolton_530_initial"].Element("PriceInPence")!, (string)addOns["bolton_530_initial"].Element("AddOnPaymentType")!));
+        Assert.Equal(("Repeating", "250"), ((string)addOns["bolton_530_rolling"].Element("ChargingBasis")!, (string)addOns["bolton_530_rolling"].Element("PriceInPence")!));
+
+        var products = cfg.Element("Products")!.Elements("Product").ToDictionary(x => (string)x.Attribute("ID")!);
+        var monthly = products["501_adult_monthly_dd"];
+        Assert.Equal(["bolton_530_initial", "bolton_530_rolling"], monthly.Element("AddOnIDs")!.Elements("item").Select(i => i.Value));
+        Assert.Contains("%TOTALRECURRINGAMOUNT%", (string)monthly.Element("DDDescription")!);
+        Assert.Contains("%ADDONRECURRINGPAYMENTAMOUNT% add-ons", (string)monthly.Element("DDBankConfirmation")!);
+        Assert.Null(products["502_adult_3_month_membership"].Element("AddOnIDs")); // no boltons -> standard text, no add-on step
+        Assert.Null(products["502_adult_3_month_membership"].Element("DDDescription"));
+
+        Assert.Contains(plan.Info, i => i.Contains("bolton 531") && i.Contains("inactive"));
+        Assert.Contains(plan.Warnings, w => w.Contains("bolton 532") && w.Contains("extra users"));
+        Assert.Empty(Config(r, "TestSiteInternal.config").Element("AddOns")!.Elements()); // internal page's only plan has no boltons
     }
 
     [Fact]
