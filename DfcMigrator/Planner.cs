@@ -167,6 +167,8 @@ public static class Planner
             .Select(p => p.DfcPlanId).Distinct().SelectMany(id => addOns[id]).ToList();
         foreach (var clash in used.GroupBy(a => a.Id).Where(g => g.Distinct().Count() > 1))
             err.Add($"Bolton add-on {clash.Key}: different fees or wording on different plans - one SNAP add-on has one price.");
+        int uncategorised = pages.SelectMany(p => p.Branches).SelectMany(b => b.Products).Count(p => p.CategoryName == "");
+        if (uncategorised > 0) plan.Info.Add($"{uncategorised} product(s) have no DFC category - shown without a category tab (\"General\").");
         if (used.Count > 0) plan.Info.Add($"{used.Select(a => a.Id).Distinct().Count()} add-on(s) from DFC boltons, offered as optional extras.");
 
         plan.Site = new SitePlan(folder, club.Name, club, pages, globals, colours, data.LogoFile, used.DistinctBy(a => a.Id).ToList());
@@ -213,9 +215,11 @@ public static class Planner
             if (venue is null) { err.Add($"{r.Cell("Branch_ID")}: venue {r.VenueId} is not in the Branches file for portal {portal.Id}."); continue; }
             // Site ref is an optional cross-check: the merchant JSON may omit it.
             if (!single && r.SiteRef != "" && venue.ClubRef != r.SiteRef) { err.Add($"{r.Cell("Site Ref (Venue-wise)")}: '{r.SiteRef}' does not match venue {venue.Id} site ref {venue.ClubRef}."); continue; }
-            if (!r.MerchantIsText) err.Add($"{r.Cell("Merchant HNK")}: stored as a number, so Excel may have dropped the 16th digit ({r.MerchantId}). Format the column as Text and re-enter the exact merchant ID.");
-            else if (!Merchant16.IsMatch(r.MerchantId)) err.Add($"{r.Cell("Merchant HNK")}: '{r.MerchantId}' must be exactly 16 digits.");
-            if (!Regex.IsMatch(r.BeneficiaryId, @"^\d+$")) err.Add($"{r.Cell("Beneficiary ID")}: '{r.BeneficiaryId}' must be a whole number.");
+            // Merchant IDs are payment credentials: messages show only the last 4 characters.
+            if (!r.MerchantIsText) err.Add($"{r.Cell("Merchant HNK")}: stored as a number, so Excel may have dropped the 16th digit ({Masked(r.MerchantId)}). Format the column as Text and re-enter the exact merchant ID.");
+            else if (!Merchant16.IsMatch(r.MerchantId)) err.Add($"{r.Cell("Merchant HNK")}: '{Masked(r.MerchantId)}' ({r.MerchantId.Length} characters) must be exactly 16 digits.");
+            // A blank beneficiary is written empty and listed as an action item (below, once the branch is created); a wrong one is an error.
+            if (r.BeneficiaryId != "" && !Regex.IsMatch(r.BeneficiaryId, @"^\d+$")) err.Add($"{r.Cell("Beneficiary ID")}: '{r.BeneficiaryId}' must be a whole number.");
 
             var plans = data.Plans.Where(p => p.PortalId == portal.Id && (single || p.ClubRef == venue.ClubRef)).ToList();
             int promo = plans.Count(p => p.PromoCode != ""), inactive = plans.Count(p => p.Active != 1), expired = plans.Count(p => Expired(p, today));
@@ -232,6 +236,7 @@ public static class Planner
             foreach (var dup in products.GroupBy(p => p.Id).Where(x => x.Count() > 1))
                 err.Add($"Portal {portal.Id}: plans {string.Join(", ", dup.Select(d => d.DfcPlanId))} at site ref {venue.ClubRef} have the same name '{dup.First().Name}' - product ID would clash.");
             branches.Add(new BranchPlan(BranchId(venue.Name), venue, r.MerchantId, r.BeneficiaryId, EmailList(venue.Email), products));
+            if (r.BeneficiaryId == "") plan.ActionItems.Add($"Portal {portal.Id} / {venue.Name} DDMS_Beneficiary: NEEDS VALUE: Beneficiary ID is blank ({r.Cell("Beneficiary ID")})");
             if (r.Integration != "") plan.Warnings.Add($"Portal {portal.Id} uses the '{r.Integration}' 3rd-party integration - not generated, configure it in SNAP.");
         }
         foreach (var dup in branches.GroupBy(b => b.Id).Where(g => g.Count() > 1))
@@ -244,13 +249,15 @@ public static class Planner
     static ProductPlan? MapProduct(Plan p, CustomerFolder data, List<string> err)
     {
         string where = $"Plan {p.Id} '{p.Name}'";
-        var cat = data.Categories.FirstOrDefault(c => c.Id == p.CategoryId);
-        if (cat is null) { err.Add($"{where}: category {p.CategoryId} is not in the Categories file."); return null; }
+        // No category (DFC CategoryID 0, or not in the Categories file) is allowed: the product just has no category tab.
+        var cat = data.Categories.FirstOrDefault(c => c.Id == p.CategoryId) ?? new Category(0, "", int.MaxValue);
         if (p.Fee <= 0) { err.Add($"{where}: fee {p.Fee} is not positive."); return null; }
         long fee = (long)Math.Round(p.Fee * 100, MidpointRounding.AwayFromZero);
         string price = (p.Fee).ToString("0.00", CultureInfo.InvariantCulture);
-        // Category becomes the product-tab class used by JS/H_ProductGrouping.js (e.g. "Adult Memberships" -> Adult_Memberships).
-        string tab = $"<span class=\"{Regex.Replace(cat.Name.Trim(), @"\s+", "_")}\"><strong>{p.Name}</strong><br />&pound;{price}";
+        // Category becomes the product-tab class used by JS/H_ProductGrouping.js (e.g. "Adult Memberships" -> Adult_Memberships);
+        // a span without a class is grouped by that script under "General".
+        string cls = cat.Name.Trim() == "" ? "" : $" class=\"{Regex.Replace(cat.Name.Trim(), @"\s+", "_")}\"";
+        string tab = $"<span{cls}><strong>{p.Name}</strong><br />&pound;{price}";
 
         if (p.CardPayOneOff == 1 || p.LetterType == "One-Off")
         {
@@ -259,11 +266,16 @@ public static class Planner
             int months = int.Parse(m.Groups[1].Value);
             return new(ProductId(p), p.Name, true, 1, months, fee, Pence(p.JoinFee), p.MinAge, $"{tab} one-off payment for {months} months membership</span>", p.Id, cat.SortOrder, cat.Name, p.ClubRef);
         }
-        if (p.ApiFrequency != "M") { err.Add($"{where}: recurring frequency '{p.ApiFrequency}' is not supported (only monthly 'M' is in the proven process)."); return null; }
+        if (!IsMonthly(p)) { err.Add($"{where}: recurring frequency '{p.ApiFrequency}' (letter type '{p.LetterType}') is not supported - only monthly is in the proven process."); return null; }
         int term = Math.Max(p.Term, 1);
         var html = term > 1 ? $"{tab} per month for a minimum of {term} months</span>" : $"{tab} per month</span>";
         return new(ProductId(p), p.Name, false, term, null, fee, Pence(p.JoinFee), p.MinAge, html, p.Id, cat.SortOrder, cat.Name, p.ClubRef);
     }
+
+    // DFC writes the frequency as api_frequency "M", or leaves it blank and has only LetterType "Monthly"; SNAP needs monthly.
+    static bool IsMonthly(Plan p) => (p.ApiFrequency.Trim() != "" ? p.ApiFrequency : p.LetterType).Trim().ToLowerInvariant() is "m" or "month" or "monthly";
+
+    static string Masked(string id) => id.Length > 4 ? new string('*', id.Length - 4) + id[^4..] : id;
 
     static long Pence(decimal v) => (long)Math.Round(v * 100, MidpointRounding.AwayFromZero);
 

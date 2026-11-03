@@ -13,7 +13,7 @@ Folder and file names can be anything. Each file's role is decided by the column
 | Club (portals) | JSON rows with `ClubURL`, `ClubKey`, `Name` | exactly 1 file |
 | Branches (venues) | JSON rows with `LinkedClubRefs`, `ClubRef`, `HideVenue` | exactly 1 |
 | Plans | JSON rows with `Fee`, `LetterType`, `api_duration` | 1 or more (merged) |
-| Categories | JSON rows with `Category`, `ParentCategoryID` | exactly 1 |
+| Categories | JSON rows with `Category`, `ParentCategoryID` | 0 or 1 (optional) |
 | Design | JSON rows with `ButtonColour`, `Logo` | exactly 1 |
 | Merchant sheet | `.xlsx` with `URL Type`, `Club_URL`, `Branch_ID`, `Site Ref (Venue-wise)`, `Merchant HNK`, `Beneficiary ID`, `New URL` | exactly 1 |
 | Logo | one `.jpg`/`.png`/`.gif` | optional (default: Xplor Pay logo) |
@@ -38,7 +38,8 @@ Unrecognised files are listed and ignored.
 | Single-branch portal | Merchant row with no `Branch_ID`, for a portal with no venues in DFC | One branch built from the portal itself (name, address, notify email, welcome) carrying all the portal's eligible plans; listed under INFORMATION |
 | Branch `ID` | Venue name | Lower-case, "Leisure Centre" removed, e.g. `greenvale_annual` |
 | `MerchantID` | Merchant sheet `Merchant HNK` | **Must be stored as Text**, exactly 16 digits. A numeric cell is refused because Excel drops the 16th digit. If every ID ends in 0 (3 or more IDs), generation stops: the column was changed to Text after Excel had already rounded the values, so the IDs must be re-entered from the merchant source. |
-| `DDMS_Beneficiary` | Merchant sheet `Beneficiary ID` | Whole number |
+| `DDMS_Beneficiary` | Merchant sheet `Beneficiary ID` | Whole number; blank is written empty with a NEEDS VALUE comment and listed as an action item |
+| Recurring frequency | Plan `api_frequency`, or `LetterType` when api_frequency is blank | `M` / `Month` / `Monthly` (any case) = monthly; anything else is an error (only monthly is proven) |
 | `Description` | Venue `Name` | |
 | `ConfirmationEmail_Branch_EmailAddresses` | Venue `Email` | Comma-separated. These are staff addresses: personal data, approved for this use, and never written to logs or reports. |
 | Branch `ProductPageBranchInfo` | Venue `Welcome` | Only when not empty |
@@ -58,7 +59,7 @@ Unrecognised files are listed and ignored.
 | `YoungAgeLimitYears` | `MinAge` | |
 | `CollectionScheduleDaysOfMonth` | Club `PayDate1/8/15/25` = `Y` | e.g. 1 and 15 |
 | `ProductDescription(Long)` | `Name` | |
-| `ProductDescriptionLongHTML` | Category + name + price | `<span class="Adult_Memberships"><strong>Name</strong><br />&pound;34.00 per month</span>`, with "…for a minimum of 12 months" when Term > 1, or "…one-off payment for N months membership". The span class makes SNAP's product tabs. |
+| `ProductDescriptionLongHTML` | Category + name + price | `<span class="Adult_Memberships"><strong>Name</strong><br />&pound;34.00 per month</span>`, with "…for a minimum of 12 months" when Term > 1, or "…one-off payment for N months membership". The span class makes SNAP's product tabs. A plan with no category (CategoryID 0, or not in the Categories file) gets a span without a class - H_ProductGrouping.js shows it under "General" - and sorts after the categorised products. |
 | Product order | Category | Category sort order, then category name, then site ref, then plan name |
 
 ## 4. Global settings (each page uses its own portal's club record)

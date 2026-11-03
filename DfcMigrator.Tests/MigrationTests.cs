@@ -127,10 +127,10 @@ public sealed class MigrationTests : IDisposable
         DisplayEmail = "", Welcome = "",
     };
 
-    static object Plan(int id, int portal, string clubRef, string name, decimal fee, int term = 1, string oneOff = "", string promo = "", int category = 1) => new
+    static object Plan(int id, int portal, string clubRef, string name, decimal fee, int term = 1, string oneOff = "", string promo = "", int category = 1, string? frequency = null) => new
     {
         ID = id, ClubID = portal, Name = name, Fee = fee, Term = term, JoinFee = 0m, LetterType = oneOff == "" ? "Monthly" : "One-Off", ClubRef = clubRef,
-        Active = 1, PromoCode = promo, EndDate = "0000-00-00 00:00:00", api_frequency = oneOff == "" ? "M" : "A", api_duration = oneOff == "" ? "CO" : oneOff,
+        Active = 1, PromoCode = promo, EndDate = "0000-00-00 00:00:00", api_frequency = frequency ?? (oneOff == "" ? "M" : "A"), api_duration = oneOff == "" ? "CO" : oneOff,
         CardPayOneOff = oneOff == "" ? 0 : 1, CategoryID = category, MinAge = 18,
     };
 
@@ -215,13 +215,13 @@ public sealed class MigrationTests : IDisposable
     public void MissingDuplicateUnreadableAndUnexpectedFiles_AreReported()
     {
         var d = Write(Customer());
-        File.Delete(Path.Combine(d, "cats.json"));
+        File.Delete(Path.Combine(d, "look.json")); // Design is required (Categories, Branches and add-ons are optional)
         File.Copy(Path.Combine(d, "a1.json"), Path.Combine(d, "copy of club.json"));
         File.WriteAllText(Path.Combine(d, "broken.json"), "[{");
         File.WriteAllText(Path.Combine(d, "notes.txt"), "x");
         File.WriteAllBytes(Path.Combine(d, "second logo.jpg"), [1]);
         var data = CustomerFolder.Load(d);
-        Assert.Contains(data.Errors, e => e == "Missing: no Categories file found in the folder.");
+        Assert.Contains(data.Errors, e => e == "Missing: no Design file found in the folder.");
         Assert.Contains(data.Errors, e => e.StartsWith("Ambiguous: 2 Club (portals) files"));
         Assert.Contains(data.Errors, e => e.StartsWith("broken.json: not valid JSON"));
         Assert.Contains(data.Errors, e => e.StartsWith("Ambiguous: 2 images"));
@@ -234,6 +234,16 @@ public sealed class MigrationTests : IDisposable
     {
         var plan = Planner.Build(CustomerFolder.Load(Write(Customer(), merchantAsText: false)), Today);
         Assert.Contains(plan.Errors, e => e.StartsWith("Merchant sheet row 2 (Merchant HNK): stored as a number"));
+    }
+
+    [Fact]
+    public void MerchantIdWithLiteralApostrophe_IsReadWithoutIt()
+    {
+        var f = Customer();
+        f.Merchant[0] = MerchantRow("Websales", "TestLeisure", 100, "501", "'1111000000000015", "7000001", "TestSite/TestSite"); // ' pasted into a Text cell
+        var (plan, r) = Run(Write(f));
+        var northgate = Config(r, "TestSite.config").Element("Branches")!.Elements("Branch").Single(b => (string?)b.Attribute("ID") == "northgate");
+        Assert.Equal("1111000000000015", northgate.Element("MerchantID")!.Value);
     }
 
     [Fact]
@@ -271,6 +281,32 @@ public sealed class MigrationTests : IDisposable
         Assert.Equal("Test Leisure", branch.Venue.Name);
         Assert.Equal(2, branch.Products.Count);
         Assert.Contains(plan.Info, i => i.Contains("no venues in DFC"));
+    }
+
+    [Fact]
+    public void PlanWithoutCategory_IsMigrated_WithoutACategoryTab()
+    {
+        var f = Customer();
+        f.Plans.Add(Plan(6, 10, "501", "Swim Only", 15m, category: 0)); // DFC CategoryID 0 = no category
+        var (plan, r) = Run(Write(f));
+        var swim = Config(r, "TestSite.config").Element("Products")!.Elements("Product").Single(p => (string?)p.Attribute("ID") == "501_swim_only");
+        Assert.StartsWith("<span><strong>Swim Only</strong>", (string?)swim.Element("ProductDescriptionLongHTML"));
+        Assert.Contains(plan.Info, i => i.StartsWith("1 product(s) have no DFC category"));
+    }
+
+    [Fact]
+    public void BlankFrequencyWithMonthlyLetterType_IsMonthly_AndBlankBeneficiary_IsAnActionItem()
+    {
+        var f = Customer();
+        f.Plans.Add(Plan(7, 10, "501", "Swim Monthly", 15m, frequency: "")); // api_frequency blank, LetterType "Monthly"
+        f.Merchant[0] = MerchantRow("Websales", "TestLeisure", 100, "501", "1111000000000015", "", "TestSite/TestSite"); // no beneficiary
+        var (plan, r) = Run(Write(f));
+        var cfg = Config(r, "TestSite.config");
+        Assert.Contains(cfg.Element("Products")!.Elements("Product"), p => (string?)p.Attribute("ID") == "501_swim_monthly");
+        var northgate = cfg.Element("Branches")!.Elements("Branch").Single(b => (string?)b.Attribute("ID") == "northgate");
+        Assert.Equal("", northgate.Element("DDMS_Beneficiary")!.Value);
+        Assert.Contains("NEEDS VALUE", northgate.Element("DDMS_Beneficiary")!.Nodes().OfType<XComment>().Single().Value);
+        Assert.Contains(plan.ActionItems, a => a.Contains("DDMS_Beneficiary: NEEDS VALUE"));
     }
 
     [Fact]

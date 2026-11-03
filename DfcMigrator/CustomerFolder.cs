@@ -136,7 +136,8 @@ public class CustomerFolder
                 ? roles.GetValueOrDefault("Merchant sheet", []).Concat(roles.GetValueOrDefault("Merchant IDs (JSON)", [])).ToList()
                 : roles.GetValueOrDefault(role, []);
             // Branches are optional: a customer without venues is migrated as single-branch portals. Boltons are optional extras.
-            if (found.Count == 0 && role is not ("Branches (venues)" or BoltonsRole)) cf.Errors.Add($"Missing: no {role} file found in the folder.");
+            // Categories are optional: an uncategorised product is shown under "General".
+            if (found.Count == 0 && role is not ("Branches (venues)" or BoltonsRole or "Categories")) cf.Errors.Add($"Missing: no {role} file found in the folder.");
             else if (found.Count > 1 && role != "Plans") cf.Errors.Add($"Ambiguous: {found.Count} {role} files ({string.Join(", ", found)}) - keep only one.");
         }
         if (roles.GetValueOrDefault(Manifest, []).Count > 1) cf.Errors.Add("Ambiguous: more than one manifest file - keep only one.");
@@ -336,7 +337,9 @@ public class CustomerFolder
     {
         XLDataType.Blank => "",
         XLDataType.Number => c.Value.GetNumber().ToString("0.############", System.Globalization.CultureInfo.InvariantCulture),
-        _ => c.Value.ToString(System.Globalization.CultureInfo.InvariantCulture).Trim(),
+        // A leading apostrophe pasted into a cell already formatted as Text is stored as a real character
+        // (it is Excel's "treat as text" marker, not data), e.g. "'0000000000000000" - drop it.
+        _ => c.Value.ToString(System.Globalization.CultureInfo.InvariantCulture).Trim().TrimStart('\'', '’').Trim(),
     };
 
     record Row(string File, int Index, JsonElement E)

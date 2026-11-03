@@ -137,7 +137,9 @@ public static class SiteGenerator
             var e = new XElement(baseBranch);
             e.SetAttributeValue("ID", b.Id);
             SetText(Required(e, "MerchantID"), b.MerchantId);
-            SetText(Required(e, "DDMS_Beneficiary"), b.BeneficiaryId);
+            var beneficiary = Required(e, "DDMS_Beneficiary");
+            SetText(beneficiary, b.BeneficiaryId);
+            if (b.BeneficiaryId == "") beneficiary.Add(new XComment(" NEEDS VALUE: Beneficiary ID was blank in the merchant sheet "));
             SetText(Required(e, "Description"), b.Venue.Name);
             var emails = Required(e, "ConfirmationEmail_Branch_EmailAddresses");
             SetText(emails, b.NotifyEmails);
